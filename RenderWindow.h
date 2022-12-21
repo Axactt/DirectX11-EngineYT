@@ -22,6 +22,7 @@ public:
 	//Initialize function changed to have first argument as pointer to windowContainer
 	bool Initialize( WindowContainer* pWindowContainer,HINSTANCE hInstance,std::string window_title, std::string window_class, int width, int height );
 	bool ProcessMessages(); // WNDPROC wrapper to capture messages/events
+	HWND GetHWND()const;
 	~RenderWindow();
 };
 

@@ -6,8 +6,8 @@ class ErrorLogger // singleton class
 {
 public:
 	static void Log( std::string message );
-	static void Log( HRESULT, std::string message );
-
+	static void Log( HRESULT hr, std::string message );
+	static void Log(HRESULT hr, std::wstring message);
 };
 
 #endif

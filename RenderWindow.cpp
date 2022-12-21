@@ -22,7 +22,7 @@ bool RenderWindow::Initialize(WindowContainer* pWindowContainer, HINSTANCE hInst
 								   NULL,//Handle to parent of this wind,first win no parent
 								   NULL,//Handle to menu or child window identifier
 								   this->hInstance,//Handle to the instance of module to be used with this window
-								   pWindowContainer );// pointer to avalue to be passed to window through CREATESTRUCT structure using WM_NCCREATE message
+								   pWindowContainer );// pointer to a value to be passed to window through CREATESTRUCT structure using WM_NCCREATE message(windowcntnr*)
 	if (this->hWnd == NULL)
 	{
 		ErrorLogger::Log( GetLastError(), "CreateWindowEx failed for Window: " + this->window_title );
@@ -41,7 +41,7 @@ bool RenderWindow::ProcessMessages()
 	//Handle the window messages, Main message loop
 	MSG msg {}; // Message structure
 	SecureZeroMemory( &msg, sizeof( MSG ) );// initialize the message structure
-	if (PeekMessage( &msg,// output poiter to store message to MSG struct
+while (PeekMessage( &msg,// output poiter to store message to MSG struct
 		 this->hWnd, //handle to window we are checking messages for 
 		 0, // Minimum filter message value
 		 0, // Maximum filter message value
@@ -63,6 +63,11 @@ bool RenderWindow::ProcessMessages()
 
 	}
 	return true;
+}
+
+HWND RenderWindow::GetHWND() const
+{
+	return this->hWnd;
 }
 
 // Destructor unregisters the classs and destroys window
@@ -104,6 +109,9 @@ LRESULT CALLBACK HandleMessageSetup( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 {
 	switch (uMsg)
 	{
+		// WM_NCCREATE triggered when window is created
+		// this message will be used  pass param to our createwindowex()
+		//Passing in pointer to object that inherits windowcontainer
 		case WM_NCCREATE:
 		{
 			const CREATESTRUCTW* const pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam);
