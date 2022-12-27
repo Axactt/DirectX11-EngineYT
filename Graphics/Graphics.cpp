@@ -16,21 +16,26 @@ bool Graphics::Initialize(HWND hwnd, int width, int height)
 
 void Graphics::RenderFrame()
 {
-	float bgcolor[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+	float bgcolor[] = { 0.0f, 0.0f,0.0f, 1.0f };
 	this->deviceContext->ClearRenderTargetView(this->renderTargetView.Get(), bgcolor);
 
 	this->deviceContext->IASetInputLayout(this->vertexshader.GetInputLayout());
 	this->deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+	this->deviceContext->RSSetState(this->rasterizerState.Get());
 	this->deviceContext->VSSetShader(vertexshader.GetShader(), NULL, 0);
 	this->deviceContext->PSSetShader(pixelshader.GetShader(), NULL, 0);
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	this->deviceContext->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
-
-
+	//Green Triangle
+	this->deviceContext->IASetVertexBuffers(0, 1, vertexBuffer2.GetAddressOf(), &stride, &offset);
 	this->deviceContext->Draw(3, 0);
+
+
+	//Red Triangle
+	this->deviceContext->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+	this->deviceContext->Draw(3, 0);
+	
 
 	this->swapchain->Present(1, NULL);
 }
@@ -111,10 +116,23 @@ bool Graphics::InitializeDirectX(HWND hwnd, int width, int height)
 	viewport.TopLeftY = 0;
 	viewport.Width = width;
 	viewport.Height = height;
-
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
 	//Set the Viewport
 	this->deviceContext->RSSetViewports(1, &viewport);
 
+	//Create Rasterizer State
+	D3D11_RASTERIZER_DESC rasterizerDesc;
+	ZeroMemory(&rasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
+	rasterizerDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_NONE;
+	//rasterizerDesc.FrontCounterClockwise = TRUE;
+	hr = this->device->CreateRasterizerState(&rasterizerDesc, this->rasterizerState.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ErrorLogger::Log(hr, "Failed to create rasterizer state.");
+		return false;
+	}
 	return true;
 }
 
@@ -143,6 +161,7 @@ bool Graphics::InitializeShaders()
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{"POSITION", 0, DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_VERTEX_DATA, 0  },
+		{"COLOR",0,DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_VERTEX_DATA,0},
 	};
 
 	UINT numElements = ARRAYSIZE(layout);
@@ -159,12 +178,13 @@ bool Graphics::InitializeShaders()
 
 bool Graphics::InitializeScene()
 {
+	//FIRST TRIANGLE
 	Vertex v[] =
 	{
-		Vertex(0.0f, -0.1f), //cENTRE Point
-		Vertex(-0.1f, 0.0f), //Left Point
-		Vertex(0.1f, 0.0f), //Right Point
-		Vertex(0.0f,0.1f), // top point
+			
+		Vertex(-0.5f, -0.5f,1.0f,0.0f,0.0f), //Bottom left 
+	    Vertex(0.0f,0.5f,1.0f,0.0f,0.0f), // Top middle 
+		Vertex(0.5f,-0.5f,1.0f,0.0f,0.0f), //Bottom right 
 	};
 
 	D3D11_BUFFER_DESC vertexBufferDesc;
@@ -186,6 +206,34 @@ bool Graphics::InitializeScene()
 		ErrorLogger::Log(hr, "Failed to create vertex buffer.");
 		return false;
 	}
+	// SECOND TRIANGLE (Green)
+	//Triangle Vertices
+	Vertex v2[] =
+	{
 
+		Vertex(-0.25f, -0.25f,0.0f,1.0f,0.0f), //Bottom left 
+		Vertex(0.0f,0.25f,0.0f,1.0f,0.0f), // Top middle 
+		Vertex(0.25f,-0.25f,0.0f,1.0f,0.0f), //Bottom right 
+	};
+
+	// D3D11_BUFFER_DESC vertexBufferDesc; No need to redeclare vertex buffer
+	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
+
+	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	vertexBufferDesc.ByteWidth = sizeof(Vertex) * ARRAYSIZE(v2);
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexBufferDesc.MiscFlags = 0;
+
+	// D3D11_SUBRESOURCE_DATA vertexBufferData;
+	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
+	vertexBufferData.pSysMem = v2;
+
+ hr = this->device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, this->vertexBuffer2.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ErrorLogger::Log(hr, "Failed to create vertex buffer.");
+		return false;
+	}
 	return true;
 }
