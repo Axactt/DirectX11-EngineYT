@@ -2,7 +2,8 @@
 #include"AdapterReader.h"
 #include "Shaders.h"
 #include "Vertex.h"
-
+#include<SpriteBatch.h>
+#include<SpriteFont.h>
 class Graphics
 {
 public:
@@ -26,8 +27,10 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer>vertexBuffer2; // vertex buffer 2nd triangle
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D>depthStencilBuffer;
-
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
 
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState>rasterizerState;
 	
+	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;
+	std::unique_ptr<DirectX::SpriteFont> spriteFont;
 }; 
